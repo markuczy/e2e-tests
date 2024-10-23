@@ -1,0 +1,71 @@
+services:
+  ########################################
+  ########### REVERSE-PROXY ##############
+  ########################################
+  traefik:
+    image: ${TRAEFIK}
+    command: --api.insecure=true --providers.docker=true #Enables the web UI and tells Træfik to listen to docker
+    ports:
+      - "80:80" #The HTTP port
+      - "8082:8080" #The Web UI (enabled by --api)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock #so Traefik can listen to the Docker events
+    networks:
+      - onecx
+
+  ########################################
+  ############### DATABASE ###############
+  ########################################
+  postgresdb:
+    image: ${POSTGRES}
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: admin
+      # POSTGRES_DB: postgres
+      # POSTGRES_USER: postgres
+    volumes:
+      - postgres:/var/lib/postgresql/data
+      - ./db/:/docker-entrypoint-initdb.d/
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "traefik.http.services.postgresdb.loadbalancer.server.port=5432"
+      - "traefik.http.routers.postgresdb.rule=Host(`postgresdb`)"
+    networks:
+      - onecx
+
+  #############################################
+  ################ Security ###################
+  #############################################
+  keycloak-app:
+    image: ${KEYCLOAK}
+    # ports:
+    #   - "9090:8080" #The HTTP port
+    entrypoint: sh /opt/jboss/keycloak/scripts/entrypoint-wrapper.sh
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB_URL: "jdbc:postgresql://postgresdb:5432/keycloak"
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+    volumes:
+      - ./keycloak/imports:/opt/jboss/keycloak/imports
+      - ./keycloak/scripts:/opt/jboss/keycloak/scripts
+    depends_on:
+      postgresdb:
+        condition: service_healthy
+    labels:
+      - "traefik.http.services.keycloak-app.loadbalancer.server.port=8080"
+      - "traefik.http.routers.keycloak-app.rule=Host(`keycloak-app`)"
+    networks:
+      - onecx
+
+volumes:
+  postgres:
+
+networks:
+  onecx:
