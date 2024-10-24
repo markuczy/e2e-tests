@@ -51,6 +51,9 @@ services:
       - "4300:8080"
     environment:
       <<: *ui_environment
+      BFF_URL: "http://onecx-shell-bff:8080/"
+    networks:
+      - onecx
 
   ############### WORKSPACE ###############
   onecx-workspace-svc:
@@ -87,6 +90,122 @@ services:
 
   onecx-workspace-ui:
     image: ${ONECX_WORKSPACE_UI}
+
+  ############### TENANT ###############
+  onecx-tenant-svc:
+    image: ${ONECX_TENANT_SVC}
+    environment:
+      <<: *svc_environment
+      QUARKUS_DATASOURCE_USERNAME: onecx_tenant
+      QUARKUS_DATASOURCE_PASSWORD: onecx_tenant
+      QUARKUS_DATASOURCE_JDBC_URL: "jdbc:postgresql://postgresdb:5432/onecx-tenant?sslmode=disable"
+      MP_JWT_VERIFY_PUBLICKEY_LOCATION: http://keycloak-app:8080/realms/OneCX/protocol/openid-connect/certs
+      TKIT_LOG_JSON_ENABLED: ${JSON_LOGGER_ENABLED}
+    labels:
+      - "traefik.http.services.onecx-tenant-svc.loadbalancer.server.port=8080"
+      - "traefik.http.routers.onecx-tenant-svc.rule=Host(`onecx-tenant-svc`)"
+    networks:
+      - onecx
+
+  ############### IAM ###############
+  onecx-iam-kc-svc:
+    image: ${ONECX_IAM_KC_SVC}
+    environment:
+      <<: *svc_environment
+      QUARKUS_KEYCLOAK_ADMIN_CLIENT_SERVER_URL: http://keycloak-app:8080
+      QUARKUS_KEYCLOAK_ADMIN_CLIENT_REALM: master
+      QUARKUS_KEYCLOAK_ADMIN_CLIENT_USERNAME: admin
+      QUARKUS_KEYCLOAK_ADMIN_CLIENT_PASSWORD: admin
+      MP_JWT_VERIFY_PUBLICKEY_LOCATION: http://keycloak-app:8080/realms/OneCX/protocol/openid-connect/certs
+      TKIT_LOG_JSON_ENABLED: ${JSON_LOGGER_ENABLED}
+    labels:
+      - "traefik.http.services.onecx-iam-kc-svc.loadbalancer.server.port=8080"
+      - "traefik.http.routers.onecx-iam-kc-svc.rule=Host(`onecx-iam-kc-svc`)"
+    networks:
+      - onecx
+
+  ############### PERMISSION ###############
+  onecx-permission-svc:
+    ports:
+      - "9999:8080"
+    image: ${ONECX_PERMISSION_SVC}
+    environment:
+      <<: *svc_environment
+      ONECX_TENANT_CACHE_ENABLED: ${ONECX_TENANT_CACHE_ENABLED}
+      QUARKUS_REST_CLIENT_ONECX_TENANT_URL: "http://onecx-tenant-svc:8080"
+      QUARKUS_DATASOURCE_USERNAME: onecx_permission
+      QUARKUS_DATASOURCE_PASSWORD: onecx_permission
+      QUARKUS_DATASOURCE_JDBC_URL: "jdbc:postgresql://postgresdb:5432/onecx-permission?sslmode=disable"
+      MP_JWT_VERIFY_PUBLICKEY_LOCATION: http://keycloak-app:8080/realms/OneCX/protocol/openid-connect/certs
+      TKIT_LOG_JSON_ENABLED: ${JSON_LOGGER_ENABLED}
+    labels:
+      - "traefik.http.services.onecx-permission-svc.loadbalancer.server.port=8080"
+      - "traefik.http.routers.onecx-permission-svc.rule=Host(`onecx-permission-svc`)"
+    networks:
+      - onecx
+
+  ############### PRODUCT-STORE ###############
+  onecx-product-store-svc:
+    image: ${ONECX_PRODUCT_STORE_SVC}
+    environment:
+      <<: *svc_environment
+      QUARKUS_DATASOURCE_USERNAME: onecx_product_store
+      QUARKUS_DATASOURCE_PASSWORD: onecx_product_store
+      QUARKUS_DATASOURCE_JDBC_URL: "jdbc:postgresql://postgresdb:5432/onecx-product-store?sslmode=disable"
+      MP_JWT_VERIFY_PUBLICKEY_LOCATION: http://keycloak-app:8080/realms/OneCX/protocol/openid-connect/certs
+      TKIT_LOG_JSON_ENABLED: ${JSON_LOGGER_ENABLED}
+    labels:
+      - "traefik.http.services.onecx-product-store-svc.loadbalancer.server.port=8080"
+      - "traefik.http.routers.onecx-product-store-svc.rule=Host(`onecx-product-store-svc`)"
+    networks:
+      - onecx
+
+  ############### THEME ###############
+  onecx-theme-svc:
+    image: ${ONECX_THEME_SVC}
+    environment:
+      <<: *svc_environment
+      QUARKUS_DATASOURCE_USERNAME: onecx_theme
+      QUARKUS_DATASOURCE_PASSWORD: onecx_theme
+      QUARKUS_DATASOURCE_JDBC_URL: "jdbc:postgresql://postgresdb:5432/onecx-theme?sslmode=disable"
+      MP_JWT_VERIFY_PUBLICKEY_LOCATION: http://keycloak-app:8080/realms/OneCX/protocol/openid-connect/certs
+      TKIT_LOG_JSON_ENABLED: ${JSON_LOGGER_ENABLED}
+    labels:
+      - "traefik.http.services.onecx-theme-svc.loadbalancer.server.port=8080"
+      - "traefik.http.routers.onecx-theme-svc.rule=Host(`onecx-theme-svc`)"
+    networks:
+      - onecx
+
+  ############### USER_PROFILE ###############
+  onecx-user-profile-avatar-svc:
+    image: ${ONECX_USER_PROFILE_AVATAR_SVC}
+    environment:
+      <<: *svc_environment
+      QUARKUS_DATASOURCE_USERNAME: onecx_user_profile_avatar
+      QUARKUS_DATASOURCE_PASSWORD: onecx_user_profile_avatar
+      QUARKUS_DATASOURCE_JDBC_URL: "jdbc:postgresql://postgresdb:5432/onecx-user-profile-avatar?sslmode=disable"
+      MP_JWT_VERIFY_PUBLICKEY_LOCATION: http://keycloak-app:8080/realms/OneCX/protocol/openid-connect/certs
+      TKIT_LOG_JSON_ENABLED: ${JSON_LOGGER_ENABLED}
+    labels:
+      - "traefik.http.services.onecx-user-profile-avatar-svc.loadbalancer.server.port=8080"
+      - "traefik.http.routers.onecx-user-profile-avatar-svc.rule=Host(`onecx-user-profile-avatar-svc`)"
+    networks:
+      - onecx
+
+  onecx-user-profile-svc:
+    image: ${ONECX_USER_PROFILE_SVC}
+    environment:
+      <<: *svc_environment
+      QUARKUS_DATASOURCE_USERNAME: onecx_user_profile
+      QUARKUS_DATASOURCE_PASSWORD: onecx_user_profile
+      QUARKUS_DATASOURCE_JDBC_URL: "jdbc:postgresql://postgresdb:5432/onecx-user-profile?sslmode=disable"
+      MP_JWT_VERIFY_PUBLICKEY_LOCATION: http://keycloak-app:8080/realms/OneCX/protocol/openid-connect/certs
+      TKIT_LOG_JSON_ENABLED: ${JSON_LOGGER_ENABLED}
+    labels:
+      - "traefik.http.services.onecx-user-profile-svc.loadbalancer.server.port=8080"
+      - "traefik.http.routers.onecx-user-profile-svc.rule=Host(`onecx-user-profile-svc`)"
+    networks:
+      - onecx
 
 volumes:
   postgres:

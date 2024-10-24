@@ -29,9 +29,17 @@ manage_product() {
     pull_app_image $1 bff main-native
     pull_app_image $1 ui main
   elif [[ $1 = "shell" ]]; then
-    applist="onecx-$1-bff onecx-$1-ui"
+    applist="onecx-$1-bff onecx-$1-ui onecx-user-profile-svc onecx-permission-svc onecx-theme-svc onecx-workspace-svc onecx-product-store-svc onecx-iam-kc-svc onecx-tenant-svc"
     pull_app_image $1 bff main-native
     pull_app_image $1 ui main
+    pull_app_image user-profile svc main-native
+    pull_app_image user-profile avatar-svc main-native
+    pull_app_image permission svc main-native
+    pull_app_image theme svc main-native
+    pull_app_image workspace svc main-native
+    pull_app_image product-store svc main-native
+    pull_app_image iam-kc svc main-native
+    pull_app_image tenant svc main-native
   elif [[ $1 = "user-profile" ]]; then
     applist="onecx-$1-bff onecx-$1-svc onecx-$1-avatar-svc onecx-$1-ui"
     pull_app_image $1 svc main-native
@@ -65,6 +73,8 @@ do
   echo "Starting ${application} Application"
   manage_product $application
 done
+
+
 
 # # TODO: Overwrite keycloak user id
 # init_db_path=$(readlink -f init-onecx-products.sh)
